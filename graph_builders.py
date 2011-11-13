@@ -1,16 +1,54 @@
 
 import networkx as nx
+import util
 
+#import graph_builders as gb
+#g, tropes, works = gb.simpleBiPartiteNetwork(features)
 def simpleBiPartiteNetwork(features):
 	
 	tropes = set()
-	all_works = features.keys()
+	works = features.keys()
 	edges = list()
 	
+	total_count = len(features)
+	count = 0
 	for work_name in features:
+		count += 1
+		if not (count % 100):
+			print count, "of", total_count
 		tropes = tropes.union(features[work_name])
 		work_tropes = list(set(features[work_name]))
 		edges.extend(zip([work_name for num in range(len(work_tropes))], work_tropes))
 		
+	print "done"
 	g = nx.Graph(edges)
+	return g, tropes, works
+
+# collapse the bipartite graph on the nodes passed in
+#wg = gb.projectBipartite(g, tropes, works)
+def projectBipartite(graph, collapse_nodes, persist_nodes):
+	edge_counts = util.Counter()	#track num of tropes per edge
+	feat_counts = util.Counter()	#track num of tropes per node
+	for n in persist_nodes:
+		feat_counts[n] = len(graph.neighbors(n))
+	print "completed trope counting..."
+	
+	total_count = len(collapse_nodes)
+	count = 0
+	for n in collapse_nodes:
+		count += 1
+		if not (count % 100):
+			print count, "of", total_count
+		works = graph.neighbors(n)
+
+		for i in range(len(works)):
+			for j in range(i+1, len(works)):
+				edge_counts[(works[i],works[j])] += 1
+	
+	# create the graph
+	g = nx.Graph()
+	g.add_nodes_from(persist_nodes)
+	g.add_edges_from(edge_counts.keys())
 	return g
+	
+	

@@ -93,4 +93,10 @@ def bigLenCount(map):
 			big.append(map.keys()[e])
 	return big
 
+def emptyEntries(map):
+	empt = list()
+	for e in map.keys():
+		if len(map[e]) == 0:
+			empt.append(e)
+	return empt
 	
