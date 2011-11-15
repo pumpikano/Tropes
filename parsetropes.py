@@ -1,4 +1,4 @@
-
+import util
 
 #type_map, feature_map, proc_cat1_map, proc_cat2_map, sameas_map, seealso_map, itemname_map = pt.parseTropes()
 def parseTropes():
@@ -56,7 +56,8 @@ def parseTropes():
 			itemname_map[name].add(lastPathSegment(parts[2]))
 			
 	return type_map, feature_map, proc_cat1_map, proc_cat2_map, sameas_map, seealso_map, itemname_map
-	
+
+#replace trope id's with trope types in feature_map and return a new map
 #feat_lists = pt.resolveFeatures(feature_map, type_map)
 def resolveFeatures(feature_map, type_map):
 	total_count = len(feature_map.keys())
@@ -77,14 +78,67 @@ def resolveFeatures(feature_map, type_map):
 		feature_lists[name] = list(set(feats))
 	
 	return feature_lists
+
+# return a list of keys in feature_lists that have a sameas relation to any other key and whose feature set is smaller
+def resolveSameAs(feature_lists, sameas_map):
+	remove_keys = set()
+	for k in sameas_map.keys():
+		'''
+		if not k in feature_lists:
+			continue
+		'''
+		sameas_set = sameas_map[k]
+		sameas_set.add(k)
+		to_remove = set()
+		for aka in sameas_set:
+			if aka not in feature_lists:
+				to_remove.add(aka)
+		sameas_set = sameas_set.difference(to_remove)
+		if not len(sameas_set) > 1:
+			continue
 		
+		num_feats = util.Counter()
+		for aka in sameas_set:
+			num_feats[aka] = len(feature_lists[aka]) 
+		to_keep = num_feats.argMax()
+		sameas_set.remove(to_keep)
+		remove_keys = remove_keys.union(sameas_set)
+		
+	return remove_keys
+
+# delete all keys in key_set from map
+def deleteKeys(key_set, map):
+	for e in key_set:
+		del map[e]
+
+# count how many TVTItems have a sameas relation
+def numTVTItem(type_map, sameas_map):
+	count = 0
+	for e in sameas_map:
+		if e in type_map and list(type_map[e])[0] == "ont/TVTItem":
+			count += 1
+	print count, "TVTItems in sameas_map"
+
+# turns out there is not anything other than ont/TVTItems in feature_map, as it should be
+def nonTVTItemsInFeatMap(type_map, feature_map):
+	nontvtitems = set()
+	for e in feature_map:
+		'''
+		if e in type_map and list(type_map[e])[0] != "ont/TVTItem":
+			nontvtitems.append(e)
+		'''
+		if e in type_map:
+			nontvtitems = nontvtitems.union(type_map[e])
+	return nontvtitems
+
+# parse out and return the full path after the top-level domain
 def lastPathSegment(str):
 	str = str[1:-1]	#remove < >
 	segments = str.split(".")		#split on .
 	segments = segments[-1].split("/")	#take the last segment and split on /
 	return "/".join(segments[1:])
 
-# find map keys with values greater than 1 	
+# find map keys with len greater than 1 	
 def bigLenCount(map):
 	lens = [len(map[e]) for e in map]
 	big = list()
@@ -100,3 +154,32 @@ def emptyEntries(map):
 			empt.append(e)
 	return empt
 	
+def find(f, seq):
+  """Return first item in sequence where f(item) == True."""
+  for ind in range(len(seq)):
+    if f(seq[ind]): 
+      return ind
+
+# return set of tropes in common between work1 and work2
+def commonTropes(feature_lists, work1, work2):
+	return set(feature_lists[work1]).intersection(set(feature_lists[work2]))
+	
+def collectProcCatSet(proc_cat_map, type_map):
+	combined_set = set()
+	for e in proc_cat_map:
+		if e in type_map and list(type_map[e])[0] == 'ont/TVTItem':
+			combined_set = combined_set.union(proc_cat_map[e])
+	return combined_set
+			
+def keysWithMoreThanOneType(type_map):
+	key_list = list()
+	for e in type_map:
+		if len(type_map[e]) > 1:
+			key_list.append(e)
+	return key_list
+			
+			
+			
+			
+			
+			
