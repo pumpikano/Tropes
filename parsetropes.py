@@ -177,6 +177,24 @@ def keysWithMoreThanOneType(type_map):
 		if len(type_map[e]) > 1:
 			key_list.append(e)
 	return key_list
+
+def combineProcCats(proc_cat1_map, proc_cat2_map):
+	new_map = dict()
+	for e in proc_cat1_map:
+		cat_set = proc_cat1_map[e]
+		for c in proc_cat1_map[e]:
+			if c in proc_cat2_map:
+				cat_set = cat_set.union(proc_cat2_map[c])
+		new_map[e] = cat_set
+	return new_map
+	
+	
+def subMapWorkInProcCat(feature_lists, proc_cat_map, proc_cat):
+	new_map = dict()
+	for e in feature_lists:
+		if e in proc_cat_map and proc_cat in proc_cat_map[e]:
+			new_map[e] = feature_lists[e]
+	return new_map
 			
 			
 			
